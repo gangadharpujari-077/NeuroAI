@@ -404,20 +404,47 @@ export default function InterviewRoom() {
       await startInterview(id);
       setInterviewStarted(true);
       initializeWebSocket();
-      toast.success('Interview started');
+      
+      // Enter fullscreen
+      enterFullscreen();
+      
+      toast.success('Interview started in secure mode');
+      toast.info('⚠️ Do not exit fullscreen during the interview!');
     } catch (error) {
       toast.error('Failed to start interview');
     }
   };
 
-  const handleEndInterview = async () => {
+  const handleEndInterview = async (integrityViolation = false) => {
     try {
-      if (wsRef.current) {
-        wsRef.current.send(JSON.stringify({ type: 'end_interview' }));
+      // Stop voice recognition
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
       }
+
+      // Send end message
+      if (wsRef.current) {
+        wsRef.current.send(JSON.stringify({ 
+          type: 'end_interview',
+          integrity_violation: integrityViolation,
+          fullscreen_exits: fullscreenExits
+        }));
+      }
+      
       await endInterview(id);
+      
       if (timerRef.current) clearInterval(timerRef.current);
-      toast.success('Interview completed');
+      
+      // Exit fullscreen
+      exitFullscreen();
+      
+      if (integrityViolation) {
+        toast.error('Interview ended due to integrity violation');
+      } else {
+        toast.success('Interview completed');
+      }
+      
       setTimeout(() => navigate(`/evaluation/${id}`), 1500);
     } catch (error) {
       toast.error('Failed to end interview');
