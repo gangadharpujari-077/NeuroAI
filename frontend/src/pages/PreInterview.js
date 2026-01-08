@@ -297,13 +297,29 @@ export default function PreInterview() {
           >
             Back to History
           </Button>
-          <Button 
-            onClick={() => navigate(`/interview/${id}`)} 
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-            data-testid="start-interview-now-btn"
-          >
-            Start Interview <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          
+          {isBelowThreshold ? (
+            <div className="flex-1 space-y-2">
+              <Button 
+                disabled
+                className="w-full bg-slate-400 cursor-not-allowed"
+                data-testid="start-interview-disabled-btn"
+              >
+                Interview Blocked - Low Match Score
+              </Button>
+              <p className="text-sm text-center text-slate-600">
+                Consider other candidates or different role for this profile
+              </p>
+            </div>
+          ) : (
+            <Button 
+              onClick={() => navigate(`/interview/${id}`)} 
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+              data-testid="start-interview-now-btn"
+            >
+              Start Interview <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
