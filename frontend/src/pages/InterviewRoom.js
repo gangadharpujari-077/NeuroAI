@@ -606,20 +606,41 @@ export default function InterviewRoom() {
                       <span className="text-white font-bold">You</span>
                     </div>
                     <div className="flex-1">
-                      <Textarea
-                        value={candidateResponse}
-                        onChange={(e) => setCandidateResponse(e.target.value)}
-                        placeholder="Type your response here..."
-                        className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-[100px]"
-                        data-testid="candidate-response-input"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.ctrlKey) {
-                            sendCandidateResponse();
-                          }
-                        }}
-                      />
+                      <div className="relative">
+                        <Textarea
+                          value={candidateResponse}
+                          onChange={(e) => setCandidateResponse(e.target.value)}
+                          placeholder="Speak or type your response here..."
+                          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-[100px]"
+                          data-testid="candidate-response-input"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.ctrlKey) {
+                              sendCandidateResponse();
+                            }
+                          }}
+                        />
+                        {recognitionActive && (
+                          <div className="absolute top-2 right-2">
+                            <Badge className="bg-red-500 animate-pulse">
+                              🎤 Recording...
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-slate-400">Press Ctrl+Enter to send</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={toggleVoiceInput}
+                            variant={isListening ? "destructive" : "secondary"}
+                            size="sm"
+                            className="gap-2"
+                            data-testid="voice-input-btn"
+                          >
+                            <Mic className="w-4 h-4" />
+                            {isListening ? 'Stop Voice' : 'Start Voice'}
+                          </Button>
+                          <span className="text-xs text-slate-400">or press Ctrl+Enter to send</span>
+                        </div>
                         <Button
                           onClick={sendCandidateResponse}
                           disabled={!candidateResponse.trim()}
