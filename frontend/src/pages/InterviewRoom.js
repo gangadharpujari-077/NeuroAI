@@ -27,11 +27,17 @@ export default function InterviewRoom() {
   const [fullscreenExits, setFullscreenExits] = useState(0);
   const [lastFaceWarning, setLastFaceWarning] = useState(0);
   const [recognitionActive, setRecognitionActive] = useState(false);
+  const [isWaitingForAI, setIsWaitingForAI] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected
   
   const recognitionRef = useRef(null);
   const containerRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
   const MAX_FULLSCREEN_EXITS = 3;
   const FACE_WARNING_INTERVAL = 5000; // 5 seconds between warnings
+  const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+  const AI_RESPONSE_TIMEOUT = 45000; // 45 seconds timeout for AI response
   
   const videoRef = useRef(null);
   const wsRef = useRef(null);
