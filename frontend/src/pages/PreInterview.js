@@ -58,21 +58,81 @@ export default function PreInterview() {
     );
   }
 
-  // Mock analysis data (in real scenario, this would come from backend)
+  if (!analysisData) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+          <p className="text-slate-900 text-xl font-semibold mb-2">Analysis Not Available</p>
+          <p className="text-slate-600 mb-4">Unable to load role fit analysis</p>
+          <Button onClick={() => navigate('/setup')}>Go Back to Setup</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use REAL analysis data from AI
   const analysis = {
-    match_score: 85,
-    skill_match_level: 'high',
-    strengths: [
-      'Strong technical background in required technologies',
-      'Relevant project experience',
-      'Good communication skills demonstrated in resume'
-    ],
-    areas_to_probe: [
-      'Depth of experience with specific frameworks',
-      'Team collaboration and leadership',
-      'Problem-solving approach'
-    ]
+    match_score: analysisData.match_score || 0,
+    skill_match_level: analysisData.skill_match_level || 'low',
+    experience_relevance: analysisData.experience_relevance || 'Analysis not available',
+    project_alignment: analysisData.project_alignment || 'Analysis not available',
+    analysis_summary: analysisData.analysis_summary || 'Analysis not available'
   };
+
+  // Parse strengths and weaknesses from the analysis text
+  const strengths = [];
+  const areas_to_probe = [];
+
+  // Extract key points from analysis_summary and experience_relevance
+  if (analysis.match_score >= 70) {
+    if (analysis.experience_relevance) {
+      const sentences = analysis.experience_relevance.split(/[.!?]+/).filter(s => s.trim());
+      sentences.slice(0, 3).forEach(s => {
+        if (s.trim() && !s.toLowerCase().includes('not') && !s.toLowerCase().includes('lack')) {
+          strengths.push(s.trim());
+        }
+      });
+    }
+  } else {
+    if (analysis.experience_relevance) {
+      const sentences = analysis.experience_relevance.split(/[.!?]+/).filter(s => s.trim());
+      sentences.slice(0, 3).forEach(s => {
+        if (s.trim()) {
+          areas_to_probe.push(s.trim());
+        }
+      });
+    }
+  }
+
+  // Extract from project_alignment
+  if (analysis.project_alignment) {
+    const sentences = analysis.project_alignment.split(/[.!?]+/).filter(s => s.trim());
+    if (analysis.match_score >= 70) {
+      sentences.slice(0, 2).forEach(s => {
+        if (s.trim() && !s.toLowerCase().includes('not') && !s.toLowerCase().includes('lack')) {
+          strengths.push(s.trim());
+        }
+      });
+    } else {
+      sentences.slice(0, 2).forEach(s => {
+        if (s.trim()) {
+          areas_to_probe.push(s.trim());
+        }
+      });
+    }
+  }
+
+  // Fallback messages
+  if (strengths.length === 0 && analysis.match_score >= 70) {
+    strengths.push('Candidate shows good alignment with role requirements');
+    strengths.push('Relevant experience for this position');
+  }
+
+  if (areas_to_probe.length === 0) {
+    areas_to_probe.push('Clarify specific experience and achievements');
+    areas_to_probe.push('Verify skills match with role expectations');
+  }
 
   const getMatchColor = (level) => {
     if (level === 'high') return 'bg-emerald-500';
