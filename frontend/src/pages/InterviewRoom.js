@@ -313,6 +313,14 @@ export default function InterviewRoom() {
   };
 
   const exitFullscreen = () => {
+    // Only exit if actually in fullscreen
+    if (!document.fullscreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.msFullscreenElement) {
+      return; // Not in fullscreen, nothing to do
+    }
+
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen();
