@@ -874,15 +874,56 @@ export default function InterviewRoom() {
                 Start Interview
               </Button>
             ) : (
-              <Button
-                size="lg"
-                onClick={handleEndInterview}
-                variant="destructive"
-                className="w-full h-14 text-lg"
-                data-testid="end-interview-btn"
-              >
-                End Interview
-              </Button>
+              <>
+                {/* Confirmation Dialog */}
+                {showEndConfirmation && (
+                  <Card className="bg-slate-800 border-amber-500 border-2 p-6 mb-4">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-1" />
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-2">End Interview?</h3>
+                          <p className="text-slate-300 text-sm mb-4">
+                            Are you sure you want to end this interview? The AI will evaluate your complete conversation and generate a final report.
+                          </p>
+                          <div className="flex gap-3">
+                            <Button
+                              onClick={() => {
+                                setShowEndConfirmation(false);
+                                handleEndInterview(false);
+                              }}
+                              variant="destructive"
+                              className="flex-1"
+                              data-testid="confirm-end-btn"
+                            >
+                              Yes, End Interview
+                            </Button>
+                            <Button
+                              onClick={() => setShowEndConfirmation(false)}
+                              variant="outline"
+                              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+                              data-testid="cancel-end-btn"
+                            >
+                              No, Continue
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+                
+                <Button
+                  size="lg"
+                  onClick={confirmEndInterview}
+                  variant="destructive"
+                  className="w-full h-14 text-lg"
+                  data-testid="end-interview-btn"
+                  disabled={showEndConfirmation}
+                >
+                  {showEndConfirmation ? 'Confirm Above...' : 'End Interview'}
+                </Button>
+              </>
             )}
           </div>
 
