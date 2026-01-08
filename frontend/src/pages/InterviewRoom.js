@@ -596,13 +596,11 @@ export default function InterviewRoom() {
       setInterviewStarted(true);
       initializeWebSocket();
       
-      // Enter fullscreen with a small delay
-      setTimeout(() => {
-        enterFullscreen();
-      }, 500);
+      toast.success('Interview started');
+      toast.info('⚠️ Entering secure fullscreen mode...', { duration: 3000 });
       
-      toast.success('Interview started in secure mode');
-      toast.info('⚠️ Stay in fullscreen during the interview. You can scroll within the interview window.');
+      // Enter fullscreen immediately (user just clicked start button, so we have gesture)
+      enterFullscreen();
     } catch (error) {
       toast.error('Failed to start interview');
     }
