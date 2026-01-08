@@ -52,6 +52,10 @@ export default function InterviewSetup() {
     try {
       setLoading(true);
       const result = await setupInterview(formData);
+      
+      // Store complete result in localStorage for pre-interview page
+      localStorage.setItem(`interview_${result.interview_id}`, JSON.stringify(result));
+      
       toast.success('Interview setup complete!');
       navigate(`/pre-interview/${result.interview_id}`);
     } catch (error) {
