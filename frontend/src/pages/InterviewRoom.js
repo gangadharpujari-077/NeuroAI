@@ -55,11 +55,72 @@ export default function InterviewRoom() {
     setupSpeechRecognition();
     setupFullscreenMonitoring();
     setupKeyboardShortcuts();
+    setupEscKeyBlocker(); // BLOCK ESC KEY!
     return () => {
       cleanup();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const setupEscKeyBlocker = () => {
+    const handleKeyDown = (e) => {
+      // Block ESC key during interview
+      if (e.key === 'Escape' && interviewStarted) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Count the attempt
+        fullscreenExitCountRef.current += 1;
+        const newExits = fullscreenExitCountRef.current;
+        setFullscreenExits(newExits);
+        
+        console.log(`ESC key blocked: ${newExits}/${MAX_FULLSCREEN_EXITS}`);
+        
+        // Log integrity flag
+        addIntegrityFlag('fullscreen_exit_attempt', `User attempted to exit fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`);
+        
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'integrity_flag',
+            flag_type: 'fullscreen_exit_attempt',
+            description: `User attempted to exit fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
+          }));
+        }
+        
+        if (newExits >= MAX_FULLSCREEN_EXITS) {
+          // 3rd attempt - terminate
+          toast.error('🚫 Interview terminated: Exceeded fullscreen exit attempts (3/3)');
+          addIntegrityFlag('critical_violation', 'Exceeded fullscreen exit attempts');
+          
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({
+              type: 'integrity_violation',
+              reason: 'Exceeded fullscreen exit attempts',
+              action: 'terminate'
+            }));
+          }
+          
+          setTimeout(() => {
+            handleEndInterview(true);
+          }, 2000);
+        } else {
+          // Warning
+          const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
+          toast.error(`🚫 WARNING #${newExits}: ESC key blocked! Attempting to exit fullscreen is a violation. ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
+            duration: 5000
+          });
+        }
+        
+        return false;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true); // Use capture phase!
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  };
 
   const setupKeyboardShortcuts = () => {
     const handleKeyPress = (e) => {
