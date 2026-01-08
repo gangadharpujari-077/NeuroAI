@@ -82,6 +82,7 @@ export default function EvaluationReport() {
   };
 
   const getRecommendationColor = (rec) => {
+    if (rec.includes('Cannot Evaluate')) return 'bg-slate-500';
     if (rec === 'Strong fit') return 'bg-emerald-500';
     if (rec === 'Moderate fit') return 'bg-amber-500';
     return 'bg-rose-500';
