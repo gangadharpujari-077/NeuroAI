@@ -647,6 +647,11 @@ export default function InterviewRoom() {
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Live Interview</h1>
             <p className="text-slate-400 font-mono text-sm">Interview ID: {id}</p>
+            {interviewStarted && (
+              <p className="text-slate-500 text-xs mt-1">
+                💡 Shortcuts: Ctrl+Space (voice) | Ctrl+Enter (send) | Scroll to see all controls
+              </p>
+            )}
             {fullscreenExits > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="destructive" className="animate-pulse">
