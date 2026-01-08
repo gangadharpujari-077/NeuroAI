@@ -1,0 +1,415 @@
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Video, VideoOff, Mic, MicOff, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { startInterview, endInterview } from '@/lib/api';
+import { FaceDetection } from '@mediapipe/face_detection';
+import { Camera } from '@mediapipe/camera_utils';
+
+export default function InterviewRoom() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  const [videoEnabled, setVideoEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [interviewStarted, setInterviewStarted] = useState(false);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [aiMessage, setAiMessage] = useState('');
+  const [transcript, setTranscript] = useState([]);
+  const [integrityFlags, setIntegrityFlags] = useState([]);
+  const [faceDetected, setFaceDetected] = useState(true);
+  
+  const videoRef = useRef(null);
+  const wsRef = useRef(null);
+  const streamRef = useRef(null);
+  const timerRef = useRef(null);
+  const faceDetectionRef = useRef(null);
+  const cameraRef = useRef(null);
+
+  const INTERVIEW_DURATION = 25 * 60; // 25 minutes in seconds
+
+  useEffect(() => {
+    initializeMedia();
+    return () => {
+      cleanup();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (interviewStarted) {
+      timerRef.current = setInterval(() => {
+        setTimeElapsed(prev => {
+          if (prev >= INTERVIEW_DURATION) {
+            handleEndInterview();
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [interviewStarted]);
+
+  const initializeMedia = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      // Initialize face detection
+      await initializeFaceDetection();
+      
+      toast.success('Camera and microphone initialized');
+    } catch (error) {
+      toast.error('Failed to access camera/microphone');
+      console.error('Media error:', error);
+    }
+  };
+
+  const initializeFaceDetection = async () => {
+    try {
+      const faceDetection = new FaceDetection({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        }
+      });
+
+      faceDetection.setOptions({
+        model: 'short',
+        minDetectionConfidence: 0.5
+      });
+
+      faceDetection.onResults((results) => {
+        if (results.detections && results.detections.length > 0) {
+          setFaceDetected(true);
+          
+          // Check for multiple faces
+          if (results.detections.length > 1 && interviewStarted) {
+            addIntegrityFlag('multiple_faces', 'Multiple faces detected');
+          }
+        } else {
+          setFaceDetected(false);
+          if (interviewStarted) {
+            addIntegrityFlag('no_face', 'No face detected');
+          }
+        }
+      });
+
+      await faceDetection.initialize();
+      faceDetectionRef.current = faceDetection;
+
+      // Start camera for face detection
+      if (videoRef.current && streamRef.current) {
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            if (faceDetectionRef.current && videoRef.current) {
+              await faceDetectionRef.current.send({ image: videoRef.current });
+            }
+          },
+          width: 640,
+          height: 480
+        });
+        camera.start();
+        cameraRef.current = camera;
+      }
+    } catch (error) {
+      console.error('Face detection initialization error:', error);
+    }
+  };
+
+  const addIntegrityFlag = (type, description) => {
+    const flag = { type, description, timestamp: new Date().toISOString() };
+    setIntegrityFlags(prev => {
+      // Avoid duplicate flags within 5 seconds
+      const recent = prev.filter(f => 
+        f.type === type && 
+        new Date() - new Date(f.timestamp) < 5000
+      );
+      if (recent.length === 0) {
+        return [...prev, flag];
+      }
+      return prev;
+    });
+  };
+
+  const initializeWebSocket = () => {
+    const wsUrl = process.env.REACT_APP_BACKEND_URL.replace('http', 'ws') + `/api/interview/${id}/ws`;
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'ai_message') {
+        setAiMessage(data.content);
+        setTranscript(prev => [...prev, { speaker: 'AI', message: data.content, time: formatTime(timeElapsed) }]);
+        
+        // Speak the message
+        const utterance = new SpeechSynthesisUtterance(data.content);
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      } else if (data.type === 'evaluation') {
+        navigate(`/evaluation/${id}`);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast.error('Connection error');
+    };
+    
+    wsRef.current = ws;
+  };
+
+  const handleStartInterview = async () => {
+    try {
+      await startInterview(id);
+      setInterviewStarted(true);
+      initializeWebSocket();
+      toast.success('Interview started');
+    } catch (error) {
+      toast.error('Failed to start interview');
+    }
+  };
+
+  const handleEndInterview = async () => {
+    try {
+      if (wsRef.current) {
+        wsRef.current.send(JSON.stringify({ type: 'end_interview' }));
+      }
+      await endInterview(id);
+      if (timerRef.current) clearInterval(timerRef.current);
+      toast.success('Interview completed');
+      setTimeout(() => navigate(`/evaluation/${id}`), 1500);
+    } catch (error) {
+      toast.error('Failed to end interview');
+    }
+  };
+
+  const toggleVideo = () => {
+    if (streamRef.current) {
+      streamRef.current.getVideoTracks()[0].enabled = !videoEnabled;
+      setVideoEnabled(!videoEnabled);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks()[0].enabled = !audioEnabled;
+      setAudioEnabled(!audioEnabled);
+    }
+  };
+
+  const cleanup = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    if (cameraRef.current) {
+      cameraRef.current.stop();
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getRemainingTime = () => INTERVIEW_DURATION - timeElapsed;
+
+  return (
+    <div className="min-h-screen bg-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">Live Interview</h1>
+            <p className="text-slate-400 font-mono text-sm">Interview ID: {id}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Timer */}
+            <Card className="bg-slate-800 border-slate-700 px-4 py-2">
+              <div className="flex items-center gap-2 text-white">
+                <Clock className="w-5 h-5" />
+                <span className="font-mono text-xl">{formatTime(getRemainingTime())}</span>
+              </div>
+            </Card>
+            
+            {/* Integrity Status */}
+            <Card className="bg-slate-800 border-slate-700 px-4 py-2" data-testid="integrity-status">
+              <div className="flex items-center gap-2">
+                {integrityFlags.length === 0 ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    <span className="text-emerald-500 font-medium">All Clear</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    <span className="text-amber-500 font-medium">{integrityFlags.length} Flags</span>
+                  </>
+                )}
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Video Feed */}
+          <div className="lg:col-span-2 space-y-4">
+            <Card className="bg-black border-slate-700 overflow-hidden" data-testid="video-container">
+              <div className="relative aspect-video bg-black">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                  data-testid="video-feed"
+                />
+                
+                {/* Face Detection Indicator */}
+                <div className="absolute top-4 right-4">
+                  <Badge className={faceDetected ? 'bg-emerald-500' : 'bg-rose-500'}>
+                    {faceDetected ? 'Face Detected' : 'No Face'}
+                  </Badge>
+                </div>
+
+                {/* Controls Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                  <div className="flex items-center justify-center gap-4">
+                    <Button
+                      size="lg"
+                      variant={videoEnabled ? 'default' : 'destructive'}
+                      onClick={toggleVideo}
+                      className="rounded-full w-14 h-14"
+                      data-testid="toggle-video-btn"
+                    >
+                      {videoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant={audioEnabled ? 'default' : 'destructive'}
+                      onClick={toggleAudio}
+                      className="rounded-full w-14 h-14"
+                      data-testid="toggle-audio-btn"
+                    >
+                      {audioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* AI Question Display */}
+            {aiMessage && (
+              <Card className="bg-slate-800 border-slate-700 p-6" data-testid="ai-question-display">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold">AI</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-lg leading-relaxed">{aiMessage}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Start/End Button */}
+            {!interviewStarted ? (
+              <Button
+                size="lg"
+                onClick={handleStartInterview}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 h-14 text-lg"
+                data-testid="start-interview-btn"
+              >
+                Start Interview
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                onClick={handleEndInterview}
+                variant="destructive"
+                className="w-full h-14 text-lg"
+                data-testid="end-interview-btn"
+              >
+                End Interview
+              </Button>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Transcript */}
+            <Card className="bg-slate-800 border-slate-700" data-testid="transcript-card">
+              <div className="p-4 border-b border-slate-700">
+                <h3 className="text-lg font-bold text-white">Interview Transcript</h3>
+              </div>
+              <div className="p-4 h-80 overflow-y-auto space-y-3">
+                {transcript.length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-8">Transcript will appear here...</p>
+                ) : (
+                  transcript.map((item, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-slate-500">{item.time}</span>
+                        <Badge variant="outline" className="text-xs">{item.speaker}</Badge>
+                      </div>
+                      <p className="text-sm text-slate-300">{item.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
+            {/* Integrity Flags */}
+            <Card className="bg-slate-800 border-slate-700" data-testid="integrity-flags-card">
+              <div className="p-4 border-b border-slate-700">
+                <h3 className="text-lg font-bold text-white">Integrity Monitoring</h3>
+              </div>
+              <div className="p-4 h-64 overflow-y-auto space-y-2">
+                {integrityFlags.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">No issues detected</p>
+                  </div>
+                ) : (
+                  integrityFlags.map((flag, idx) => (
+                    <div key={idx} className="flex gap-2 items-start p-2 bg-amber-500/10 rounded border border-amber-500/20">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-xs font-mono text-slate-500">
+                          {new Date(flag.timestamp).toLocaleTimeString()}
+                        </div>
+                        <div className="text-sm text-amber-200">{flag.description}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
