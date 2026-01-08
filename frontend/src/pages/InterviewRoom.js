@@ -478,6 +478,10 @@ export default function InterviewRoom() {
     if (cameraRef.current) {
       cameraRef.current.stop();
     }
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+    }
+    exitFullscreen();
   };
 
   const formatTime = (seconds) => {
