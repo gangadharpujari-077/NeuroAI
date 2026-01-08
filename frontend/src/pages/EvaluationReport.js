@@ -41,39 +41,44 @@ export default function EvaluationReport() {
     );
   }
 
-  // Mock evaluation data
+  if (!data || !data.evaluation) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+          <p className="text-slate-900 text-xl font-semibold mb-2">Evaluation Not Available</p>
+          <p className="text-slate-600 mb-4">The interview evaluation has not been generated yet</p>
+          <Button onClick={() => navigate('/history')}>Go to History</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use REAL evaluation data from backend
   const evaluation = {
-    overall_score: 78,
-    recommendation: 'Strong fit',
-    role_fit: {
-      skill_alignment: 85,
-      experience_relevance: 80,
-      project_applicability: 75
+    overall_score: data.evaluation.overall_score || 0,
+    recommendation: data.evaluation.recommendation || 'Pending',
+    role_fit: data.evaluation.role_fit || {
+      skill_alignment: 0,
+      experience_relevance: 0,
+      project_applicability: 0
     },
-    performance: {
-      communication_clarity: 82,
-      depth_of_understanding: 76,
-      consistency_with_resume: 88
+    performance: data.evaluation.performance || {
+      communication_clarity: 0,
+      depth_of_understanding: 0,
+      consistency_with_resume: 0
     },
-    behavioral_observations: {
-      confidence_indicators: 'High',
-      nervousness_patterns: 'Minimal initial nervousness, improved throughout',
-      responsiveness: 'Good - answered promptly'
+    behavioral_observations: data.evaluation.behavioral_observations || {
+      confidence_indicators: 'Not assessed',
+      nervousness_patterns: 'Not assessed',
+      responsiveness: 'Not assessed'
     },
-    integrity_score: {
-      score: 95,
-      suspicious_moments: data?.integrity_flags || []
+    integrity_score: data.evaluation.integrity_score || {
+      score: 100,
+      suspicious_moments: data.integrity_flags || []
     },
-    strengths: [
-      'Strong technical knowledge demonstrated',
-      'Clear communication skills',
-      'Good problem-solving approach',
-      'Relevant project experience'
-    ],
-    weaknesses: [
-      'Could provide more specific examples',
-      'Depth in certain frameworks needs improvement'
-    ]
+    strengths: data.evaluation.strengths || ['Assessment pending'],
+    weaknesses: data.evaluation.weaknesses || ['Assessment pending']
   };
 
   const getRecommendationColor = (rec) => {
