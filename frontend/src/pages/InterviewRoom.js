@@ -318,34 +318,35 @@ export default function InterviewRoom() {
             
             // End interview after 2 seconds
             setTimeout(() => {
-              handleEndInterview(true); // true = integrity violation
+              handleEndInterview(true);
             }, 2000);
           } else {
-            // Warning for 1st and 2nd exit - AUTO RE-ENTER
+            // Warning for 1st and 2nd exit
             const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
-            toast.error(`⚠️ WARNING #${newExits}: Do not exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
+            toast.error(`🚫 SECURITY VIOLATION #${newExits}: Attempting to exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
               duration: 5000
             });
             
-            // AUTOMATIC re-enter fullscreen (NO MANUAL BUTTON NEEDED)
-            setTimeout(() => {
-              console.log('Auto re-entering fullscreen...');
-              enterFullscreen();
-              
-              // If auto-entry fails, show prompt after 2 seconds
-              setTimeout(() => {
-                const isNowFullscreen = !!(document.fullscreenElement || 
-                                          document.webkitFullscreenElement || 
-                                          document.mozFullScreenElement || 
-                                          document.msFullscreenElement);
-                if (!isNowFullscreen) {
-                  setShowFullscreenPrompt(true);
-                  toast.error('⚠️ You must click the button below to re-enter fullscreen!', {
-                    duration: 10000
-                  });
-                }
-              }, 2000);
-            }, 500);
+            // FORCE IMMEDIATE re-entry - call directly in same event cycle
+            // This uses the user gesture from ESC key press
+            const elem = containerRef.current || document.documentElement;
+            
+            // Synchronous fullscreen request - no setTimeout!
+            if (elem.requestFullscreen) {
+              elem.requestFullscreen().then(() => {
+                console.log('Forced back to fullscreen');
+              }).catch(err => {
+                console.error('Force fullscreen failed:', err);
+                // Try again after tiny delay as last resort
+                setTimeout(() => {
+                  elem.requestFullscreen().catch(e => console.error('Retry failed:', e));
+                }, 100);
+              });
+            } else if (elem.webkitRequestFullscreen) {
+              elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+              elem.mozRequestFullScreen();
+            }
           }
         }
       }
