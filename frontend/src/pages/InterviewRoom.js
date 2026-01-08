@@ -24,6 +24,14 @@ export default function InterviewRoom() {
   const [faceDetected, setFaceDetected] = useState(false);
   const [candidateResponse, setCandidateResponse] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [fullscreenExits, setFullscreenExits] = useState(0);
+  const [lastFaceWarning, setLastFaceWarning] = useState(0);
+  const [recognitionActive, setRecognitionActive] = useState(false);
+  
+  const recognitionRef = useRef(null);
+  const containerRef = useRef(null);
+  const MAX_FULLSCREEN_EXITS = 3;
+  const FACE_WARNING_INTERVAL = 5000; // 5 seconds between warnings
   
   const videoRef = useRef(null);
   const wsRef = useRef(null);
