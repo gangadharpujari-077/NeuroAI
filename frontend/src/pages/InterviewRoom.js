@@ -52,11 +52,29 @@ export default function InterviewRoom() {
     initializeMedia();
     setupSpeechRecognition();
     setupFullscreenMonitoring();
+    setupKeyboardShortcuts();
     return () => {
       cleanup();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const setupKeyboardShortcuts = () => {
+    const handleKeyPress = (e) => {
+      // Ctrl/Cmd + Space: Toggle voice input
+      if ((e.ctrlKey || e.metaKey) && e.code === 'Space') {
+        e.preventDefault();
+        toggleVoiceInput();
+      }
+      // Ctrl/Cmd + Enter: Send response (handled in textarea already)
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  };
 
   useEffect(() => {
     if (interviewStarted) {
