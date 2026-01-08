@@ -327,6 +327,8 @@ export default function InterviewRoom() {
       console.error('Exit fullscreen failed:', error);
     }
   };
+
+  const addIntegrityFlag = (type, description) => {
     const flag = { type, description, timestamp: new Date().toISOString() };
     setIntegrityFlags(prev => {
       // Avoid duplicate flags within 5 seconds
