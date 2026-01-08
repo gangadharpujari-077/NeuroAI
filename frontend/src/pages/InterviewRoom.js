@@ -570,15 +570,19 @@ export default function InterviewRoom() {
         setIsListening(false);
       }
 
-      // Send end message
-      if (wsRef.current) {
+      // Send end message to backend
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ 
           type: 'end_interview',
           integrity_violation: integrityViolation,
-          fullscreen_exits: fullscreenExits
+          fullscreen_exits: fullscreenExitCountRef.current
         }));
+        
+        // Wait a moment for backend to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
       
+      // Call API to end interview
       await endInterview(id);
       
       if (timerRef.current) clearInterval(timerRef.current);
@@ -589,13 +593,22 @@ export default function InterviewRoom() {
       if (integrityViolation) {
         toast.error('Interview ended due to integrity violation');
       } else {
-        toast.success('Interview completed');
+        toast.success('Interview completed successfully');
       }
       
+      // Navigate to evaluation
       setTimeout(() => navigate(`/evaluation/${id}`), 1500);
     } catch (error) {
-      toast.error('Failed to end interview');
+      console.error('End interview error:', error);
+      toast.error('Error ending interview: ' + error.message);
+      
+      // Try to navigate anyway
+      setTimeout(() => navigate(`/evaluation/${id}`), 2000);
     }
+  };
+
+  const confirmEndInterview = () => {
+    setShowEndConfirmation(true);
   };
 
   const toggleVideo = () => {
