@@ -386,6 +386,11 @@ Rules:
         while True:
             data = await websocket.receive_json()
             
+            if data.get('type') == 'ping':
+                # Respond to heartbeat
+                await manager.send_message(interview_id, {"type": "pong"})
+                continue
+            
             if data.get('type') == 'candidate_response':
                 # Send to AI
                 response = await chat.send_message(UserMessage(text=data['content']))
