@@ -457,30 +457,95 @@ Rules:
                 break
             
             elif data.get('type') == 'end_interview':
-                # Generate evaluation
-                eval_prompt = f"""The interview has ended. Generate a comprehensive evaluation report in JSON format:
+                # Generate evaluation based on actual interview
+                try:
+                    # Get the full interview data
+                    interview_doc = await db.interviews.find_one({"id": interview_id}, {"_id": 0})
+                    
+                    eval_prompt = f"""Based on this interview, generate a comprehensive evaluation report in JSON format.
+
+Interview Details:
+- Questions Asked: {len(interview_doc.get('questions_asked', []))}
+- Integrity Flags: {len(interview_doc.get('integrity_flags', []))}
+
+Conversation History:
+{chr(10).join(interview_doc.get('questions_asked', [])[:10])}
+
+Generate evaluation in this EXACT JSON format:
 {{
-    "role_fit": {{"skill_alignment": "", "experience_relevance": "", "project_applicability": ""}},
-    "performance": {{"communication_clarity": "", "depth_of_understanding": "", "consistency_with_resume": ""}},
-    "behavioral_observations": {{"confidence_indicators": "", "nervousness_patterns": "", "responsiveness": ""}},
-    "integrity_score": {{"score": 0-100, "suspicious_moments": []}},
-    "strengths": ["strength1", "strength2"],
-    "weaknesses": ["weakness1", "weakness2"],
-    "recommendation": "Strong fit / Moderate fit / Weak fit"
+    "overall_score": <number 0-100>,
+    "recommendation": "Strong fit / Moderate fit / Weak fit",
+    "role_fit": {{
+        "skill_alignment": <number 0-100>,
+        "experience_relevance": <number 0-100>,
+        "project_applicability": <number 0-100>
+    }},
+    "performance": {{
+        "communication_clarity": <number 0-100>,
+        "depth_of_understanding": <number 0-100>,
+        "consistency_with_resume": <number 0-100>
+    }},
+    "behavioral_observations": {{
+        "confidence_indicators": "High/Medium/Low",
+        "nervousness_patterns": "description",
+        "responsiveness": "description"
+    }},
+    "integrity_score": {{
+        "score": <number 0-100>,
+        "suspicious_moments": []
+    }},
+    "strengths": ["strength1", "strength2", "strength3"],
+    "weaknesses": ["weakness1", "weakness2"]
 }}
+
+Consider integrity flags in scoring. Return ONLY valid JSON.
 """
-                evaluation_text = await chat.send_message(UserMessage(text=eval_prompt))
-                
-                # Save evaluation
-                await db.interviews.update_one(
-                    {"id": interview_id},
-                    {"$set": {"evaluation": {"raw_text": evaluation_text}}}
-                )
-                
-                await manager.send_message(interview_id, {
-                    "type": "evaluation",
-                    "content": evaluation_text
-                })
+                    
+                    evaluation_text = await chat.send_message(UserMessage(text=eval_prompt))
+                    
+                    # Parse JSON from response
+                    import re
+                    import json as json_module
+                    
+                    # Try to extract JSON
+                    json_match = re.search(r'\{.*\}', evaluation_text, re.DOTALL)
+                    if json_match:
+                        evaluation_data = json_module.loads(json_match.group())
+                    else:
+                        # Fallback evaluation
+                        evaluation_data = {
+                            "overall_score": 50,
+                            "recommendation": "Moderate fit",
+                            "raw_text": evaluation_text
+                        }
+                    
+                    # Add integrity flags to evaluation
+                    evaluation_data['integrity_flags'] = interview_doc.get('integrity_flags', [])
+                    
+                    # Calculate integrity score based on flags
+                    flag_count = len(interview_doc.get('integrity_flags', []))
+                    integrity_score = max(0, 100 - (flag_count * 15))  # -15 points per flag
+                    evaluation_data['integrity_score'] = {
+                        "score": integrity_score,
+                        "suspicious_moments": interview_doc.get('integrity_flags', [])
+                    }
+                    
+                    # Save evaluation
+                    await db.interviews.update_one(
+                        {"id": interview_id},
+                        {"$set": {"evaluation": evaluation_data}}
+                    )
+                    
+                    await manager.send_message(interview_id, {
+                        "type": "evaluation",
+                        "content": evaluation_data
+                    })
+                except Exception as e:
+                    logging.error(f"Evaluation generation error: {e}")
+                    await manager.send_message(interview_id, {
+                        "type": "error",
+                        "message": "Failed to generate evaluation"
+                    })
                 break
     
     except WebSocketDisconnect:
