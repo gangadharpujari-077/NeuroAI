@@ -140,6 +140,9 @@ export default function PreInterview() {
     return 'bg-rose-500';
   };
 
+  const MINIMUM_MATCH_THRESHOLD = 35;
+  const isBelowThreshold = analysis.match_score < MINIMUM_MATCH_THRESHOLD;
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-6">
       <div className="max-w-5xl mx-auto">
@@ -147,6 +150,37 @@ export default function PreInterview() {
           <h1 className="text-4xl font-bold text-slate-900 mb-2">Pre-Interview Analysis</h1>
           <p className="text-lg text-slate-600">AI-powered role fit assessment</p>
         </div>
+
+        {/* Low Match Warning Banner */}
+        {isBelowThreshold && (
+          <Card className="mb-6 border-rose-300 bg-rose-50 shadow-xl" data-testid="low-match-warning">
+            <CardContent className="pt-6">
+              <div className="flex gap-4 items-start">
+                <div className="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-rose-900 mb-2">
+                    Interview Not Recommended - Low Role Fit
+                  </h3>
+                  <p className="text-rose-800 text-base leading-relaxed mb-4">
+                    The candidate's profile shows a match score of <strong>{analysis.match_score}%</strong>, which is significantly below our threshold of {MINIMUM_MATCH_THRESHOLD}%. 
+                    Proceeding with this interview would not be an effective use of time for either party.
+                  </p>
+                  <div className="bg-rose-100 border border-rose-200 rounded-lg p-4 mb-4">
+                    <p className="text-rose-900 font-semibold mb-2">📋 Our Recommendation:</p>
+                    <p className="text-rose-800 text-sm leading-relaxed">
+                      {analysis.analysis_summary}
+                    </p>
+                  </div>
+                  <p className="text-rose-800 font-medium">
+                    💡 <strong>Suggestion:</strong> This candidate may be better suited for different roles that align with their background and experience.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Match Score */}
         <Card className="mb-6 border-slate-200 shadow-lg" data-testid="match-score-card">
