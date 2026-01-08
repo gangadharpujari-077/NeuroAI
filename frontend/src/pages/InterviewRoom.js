@@ -373,9 +373,6 @@ export default function InterviewRoom() {
       return;
     }
     
-    // Hide prompt if shown
-    setShowFullscreenPrompt(false);
-    
     const requestFS = async () => {
       try {
         if (elem.requestFullscreen) {
@@ -387,20 +384,12 @@ export default function InterviewRoom() {
         } else if (elem.msRequestFullscreen) {
           await elem.msRequestFullscreen();
         } else {
-          toast.error('Fullscreen not supported in your browser');
+          console.error('Fullscreen not supported');
           return;
         }
         console.log('Fullscreen entered successfully');
       } catch (err) {
         console.error('Fullscreen request failed:', err);
-        
-        // Show manual prompt if automatic fails
-        if (interviewStarted) {
-          setShowFullscreenPrompt(true);
-          toast.error('⚠️ Click the "Return to Fullscreen" button below!', {
-            duration: 10000
-          });
-        }
       }
     };
     
