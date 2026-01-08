@@ -183,18 +183,22 @@ export default function PreInterview() {
             <CardHeader className="border-b border-slate-200 bg-emerald-50">
               <CardTitle className="text-xl flex items-center gap-2 text-emerald-900">
                 <CheckCircle2 className="w-5 h-5" />
-                Identified Strengths
+                {analysis.match_score >= 70 ? 'Identified Strengths' : 'Key Observations'}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <ul className="space-y-3">
-                {analysis.strengths.map((strength, idx) => (
-                  <li key={idx} className="flex gap-3 items-start">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-700">{strength}</span>
-                  </li>
-                ))}
-              </ul>
+              {strengths.length > 0 ? (
+                <ul className="space-y-3">
+                  {strengths.map((strength, idx) => (
+                    <li key={idx} className="flex gap-3 items-start">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-slate-700">{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-slate-600">{analysis.analysis_summary}</p>
+              )}
             </CardContent>
           </Card>
 
@@ -203,12 +207,12 @@ export default function PreInterview() {
             <CardHeader className="border-b border-slate-200 bg-amber-50">
               <CardTitle className="text-xl flex items-center gap-2 text-amber-900">
                 <AlertCircle className="w-5 h-5" />
-                Areas to Probe
+                {analysis.match_score >= 70 ? 'Areas to Probe' : 'Areas of Concern'}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <ul className="space-y-3">
-                {analysis.areas_to_probe.map((area, idx) => (
+                {areas_to_probe.map((area, idx) => (
                   <li key={idx} className="flex gap-3 items-start">
                     <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <span className="text-slate-700">{area}</span>
