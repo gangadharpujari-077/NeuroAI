@@ -493,13 +493,20 @@ export default function InterviewRoom() {
   const getRemainingTime = () => INTERVIEW_DURATION - timeElapsed;
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <div ref={containerRef} className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Live Interview</h1>
             <p className="text-slate-400 font-mono text-sm">Interview ID: {id}</p>
+            {fullscreenExits > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="destructive" className="animate-pulse">
+                  ⚠️ Fullscreen Exits: {fullscreenExits}/{MAX_FULLSCREEN_EXITS}
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4">
             {/* Timer */}
