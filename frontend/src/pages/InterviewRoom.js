@@ -250,46 +250,62 @@ export default function InterviewRoom() {
 
   const setupFullscreenMonitoring = () => {
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && interviewStarted) {
-        // User exited fullscreen
-        const newExits = fullscreenExits + 1;
-        setFullscreenExits(newExits);
-
-        if (newExits >= MAX_FULLSCREEN_EXITS) {
-          // Failed integrity check
-          toast.error('🚫 Interview terminated: Exceeded fullscreen exit limit');
-          addIntegrityFlag('fullscreen_violation', 'Exceeded maximum fullscreen exits (3)');
-          
-          // Mark as unfit
-          if (wsRef.current) {
-            wsRef.current.send(JSON.stringify({
-              type: 'integrity_violation',
-              reason: 'Exceeded fullscreen exit limit',
-              action: 'terminate'
-            }));
-          }
-
-          // End interview
-          setTimeout(() => {
-            handleEndInterview(true); // true = integrity violation
-          }, 2000);
-        } else {
-          // Warning
-          const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
-          toast.error(`⚠️ WARNING: Do not exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`);
-          addIntegrityFlag('fullscreen_exit', `Fullscreen exit #${newExits}`);
-          
-          // Send to backend
-          if (wsRef.current) {
-            wsRef.current.send(JSON.stringify({
-              type: 'integrity_flag',
-              flag_type: 'fullscreen_exit',
-              description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
-            }));
-          }
-
-          // Re-enter fullscreen
-          enterFullscreen();
+      const isInFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement || 
+                                document.msFullscreenElement);
+      
+      // Only track exits if interview has started
+      if (!isInFullscreen) {
+        // Check if interview is active via ref
+        const interviewActive = wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
+        
+        if (interviewActive) {
+          // User exited fullscreen during active interview
+          setFullscreenExits(prev => {
+            const newExits = prev + 1;
+            
+            if (newExits >= MAX_FULLSCREEN_EXITS) {
+              // Failed integrity check
+              toast.error('🚫 Interview terminated: Exceeded fullscreen exit limit');
+              addIntegrityFlag('fullscreen_violation', 'Exceeded maximum fullscreen exits (3)');
+              
+              // Mark as unfit
+              if (wsRef.current) {
+                wsRef.current.send(JSON.stringify({
+                  type: 'integrity_violation',
+                  reason: 'Exceeded fullscreen exit limit',
+                  action: 'terminate'
+                }));
+              }
+              
+              // End interview
+              setTimeout(() => {
+                handleEndInterview(true); // true = integrity violation
+              }, 2000);
+            } else {
+              // Warning
+              const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
+              toast.error(`⚠️ WARNING: Do not exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`);
+              addIntegrityFlag('fullscreen_exit', `Fullscreen exit #${newExits}`);
+              
+              // Send to backend
+              if (wsRef.current) {
+                wsRef.current.send(JSON.stringify({
+                  type: 'integrity_flag',
+                  flag_type: 'fullscreen_exit',
+                  description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
+                }));
+              }
+              
+              // Try to re-enter fullscreen after a brief delay
+              setTimeout(() => {
+                enterFullscreen();
+              }, 1000);
+            }
+            
+            return newExits;
+          });
         }
       }
     };
@@ -298,6 +314,14 @@ export default function InterviewRoom() {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
   };
 
   const enterFullscreen = () => {
