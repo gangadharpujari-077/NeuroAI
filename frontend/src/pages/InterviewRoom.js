@@ -159,6 +159,7 @@ export default function InterviewRoom() {
     
     ws.onopen = () => {
       console.log('WebSocket connected');
+      toast.success('Connected to AI interviewer');
     };
     
     ws.onmessage = (event) => {
@@ -169,9 +170,11 @@ export default function InterviewRoom() {
         setTranscript(prev => [...prev, { speaker: 'AI', message: data.content, time: formatTime(timeElapsed) }]);
         
         // Speak the message
-        const utterance = new SpeechSynthesisUtterance(data.content);
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
+        if (window.speechSynthesis) {
+          const utterance = new SpeechSynthesisUtterance(data.content);
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
+        }
       } else if (data.type === 'evaluation') {
         navigate(`/evaluation/${id}`);
       }
@@ -181,8 +184,31 @@ export default function InterviewRoom() {
       console.error('WebSocket error:', error);
       toast.error('Connection error');
     };
+
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
     
     wsRef.current = ws;
+  };
+
+  const sendCandidateResponse = () => {
+    if (!candidateResponse.trim() || !wsRef.current) return;
+    
+    const response = candidateResponse.trim();
+    
+    // Add to transcript
+    setTranscript(prev => [...prev, { speaker: 'Candidate', message: response, time: formatTime(timeElapsed) }]);
+    
+    // Send to backend
+    wsRef.current.send(JSON.stringify({ 
+      type: 'candidate_response',
+      content: response 
+    }));
+    
+    // Clear input
+    setCandidateResponse('');
+    toast.success('Response sent');
   };
 
   const handleStartInterview = async () => {
