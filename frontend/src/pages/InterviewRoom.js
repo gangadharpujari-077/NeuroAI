@@ -338,77 +338,28 @@ export default function InterviewRoom() {
                                 document.mozFullScreenElement || 
                                 document.msFullscreenElement);
       
-      // Only track exits if interview has started and WebSocket is active
+      // If they managed to exit fullscreen (e.g., via browser UI button)
       if (!isInFullscreen) {
         const interviewActive = wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
         
         if (interviewActive) {
-          // User exited fullscreen during active interview
-          fullscreenExitCountRef.current += 1;
-          const newExits = fullscreenExitCountRef.current;
+          // Don't double-count if ESC key already counted it
+          const currentCount = fullscreenExitCountRef.current;
           
-          // Update state for UI
-          setFullscreenExits(newExits);
+          // Check if we need to count this exit
+          // (ESC key handler already incremented, so only increment for OTHER methods)
+          console.log('Fullscreen exited via browser UI or other method');
           
-          console.log(`Fullscreen exit detected: ${newExits}/${MAX_FULLSCREEN_EXITS}`);
-          
-          // Log the flag
-          addIntegrityFlag('fullscreen_exit', `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`);
-          
-          // Send to backend immediately
-          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify({
-              type: 'integrity_flag',
-              flag_type: 'fullscreen_exit',
-              description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
-            }));
-          }
-          
-          if (newExits >= MAX_FULLSCREEN_EXITS) {
-            // Failed integrity check - 3rd exit ONLY
-            toast.error('🚫 Interview terminated: Exceeded fullscreen exit limit (3/3)');
-            addIntegrityFlag('critical_violation', 'Exceeded fullscreen exit limit');
-            
-            // Mark as unfit
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({
-                type: 'integrity_violation',
-                reason: 'Exceeded fullscreen exit limit',
-                action: 'terminate'
-              }));
-            }
-            
-            // End interview after 2 seconds
-            setTimeout(() => {
-              handleEndInterview(true);
-            }, 2000);
-          } else {
-            // Warning for 1st and 2nd exit
-            const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
-            toast.error(`🚫 SECURITY VIOLATION #${newExits}: Attempting to exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
-              duration: 5000
+          if (currentCount < MAX_FULLSCREEN_EXITS) {
+            // Try to force back to fullscreen
+            toast.error('🚫 Fullscreen exit detected! Returning to secure mode...', {
+              duration: 3000
             });
             
-            // FORCE IMMEDIATE re-entry - call directly in same event cycle
-            // This uses the user gesture from ESC key press
-            const elem = containerRef.current || document.documentElement;
-            
-            // Synchronous fullscreen request - no setTimeout!
-            if (elem.requestFullscreen) {
-              elem.requestFullscreen().then(() => {
-                console.log('Forced back to fullscreen');
-              }).catch(err => {
-                console.error('Force fullscreen failed:', err);
-                // Try again after tiny delay as last resort
-                setTimeout(() => {
-                  elem.requestFullscreen().catch(e => console.error('Retry failed:', e));
-                }, 100);
-              });
-            } else if (elem.webkitRequestFullscreen) {
-              elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-              elem.mozRequestFullScreen();
-            }
+            // Immediate re-entry attempt
+            setTimeout(() => {
+              enterFullscreen();
+            }, 100);
           }
         }
       }
@@ -419,7 +370,6 @@ export default function InterviewRoom() {
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     
-    // Cleanup
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
