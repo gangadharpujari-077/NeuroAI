@@ -462,14 +462,60 @@ Rules:
                     # Get the full interview data
                     interview_doc = await db.interviews.find_one({"id": interview_id}, {"_id": 0})
                     
+                    questions_asked = interview_doc.get('questions_asked', [])
+                    
+                    # Check if candidate actually responded (need at least 2 exchanges - greeting + 1 response)
+                    if len(questions_asked) <= 1:
+                        # No actual responses from candidate
+                        evaluation_data = {
+                            "overall_score": 0,
+                            "recommendation": "Cannot Evaluate - No Responses",
+                            "role_fit": {
+                                "skill_alignment": 0,
+                                "experience_relevance": 0,
+                                "project_applicability": 0
+                            },
+                            "performance": {
+                                "communication_clarity": 0,
+                                "depth_of_understanding": 0,
+                                "consistency_with_resume": 0
+                            },
+                            "behavioral_observations": {
+                                "confidence_indicators": "Not assessed",
+                                "nervousness_patterns": "Candidate did not respond to any questions",
+                                "responsiveness": "No responses provided"
+                            },
+                            "integrity_score": {
+                                "score": 0,
+                                "suspicious_moments": interview_doc.get('integrity_flags', [])
+                            },
+                            "strengths": ["Unable to assess - no interview responses captured"],
+                            "weaknesses": ["Did not participate in interview", "No responses provided to any questions"]
+                        }
+                        
+                        # Add integrity flags
+                        evaluation_data['integrity_flags'] = interview_doc.get('integrity_flags', [])
+                        
+                        # Save evaluation
+                        await db.interviews.update_one(
+                            {"id": interview_id},
+                            {"$set": {"evaluation": evaluation_data}}
+                        )
+                        
+                        await manager.send_message(interview_id, {
+                            "type": "evaluation",
+                            "content": evaluation_data
+                        })
+                        break
+                    
                     eval_prompt = f"""Based on this interview, generate a comprehensive evaluation report in JSON format.
 
 Interview Details:
-- Questions Asked: {len(interview_doc.get('questions_asked', []))}
+- Questions Asked: {len(questions_asked)}
 - Integrity Flags: {len(interview_doc.get('integrity_flags', []))}
 
 Conversation History:
-{chr(10).join(interview_doc.get('questions_asked', [])[:10])}
+{chr(10).join(questions_asked[:10])}
 
 Generate evaluation in this EXACT JSON format:
 {{
