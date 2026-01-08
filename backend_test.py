@@ -146,6 +146,27 @@ class AIInterviewAPITester:
         )
         return success
 
+    def test_integrity_flag(self):
+        """Test integrity flag endpoint"""
+        if not self.interview_id:
+            print("❌ No interview ID available for testing")
+            return False
+            
+        flag_data = {
+            "timestamp": datetime.now().isoformat(),
+            "flag_type": "fullscreen_exit",
+            "description": "Test integrity flag - user exited fullscreen"
+        }
+        
+        success, response = self.run_test(
+            "Add Integrity Flag",
+            "POST",
+            f"api/interview/{self.interview_id}/integrity-flag",
+            200,
+            data=flag_data
+        )
+        return success
+
     def test_end_interview(self):
         """Test end interview endpoint"""
         if not self.interview_id:
