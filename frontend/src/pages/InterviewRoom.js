@@ -371,6 +371,44 @@ export default function InterviewRoom() {
               </Card>
             )}
 
+            {/* Candidate Response Input */}
+            {interviewStarted && (
+              <Card className="bg-slate-800 border-slate-700 p-6" data-testid="response-input-card">
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold">You</span>
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        value={candidateResponse}
+                        onChange={(e) => setCandidateResponse(e.target.value)}
+                        placeholder="Type your response here..."
+                        className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-[100px]"
+                        data-testid="candidate-response-input"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            sendCandidateResponse();
+                          }
+                        }}
+                      />
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-slate-400">Press Ctrl+Enter to send</span>
+                        <Button
+                          onClick={sendCandidateResponse}
+                          disabled={!candidateResponse.trim()}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          data-testid="send-response-btn"
+                        >
+                          Send Response
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Start/End Button */}
             {!interviewStarted ? (
               <Button
