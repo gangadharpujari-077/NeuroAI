@@ -612,6 +612,22 @@ export default function InterviewRoom() {
             )}
           </div>
           <div className="flex items-center gap-4">
+            {/* Connection Status */}
+            <Card className="bg-slate-800 border-slate-700 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
+                  connectionStatus === 'connecting' ? 'bg-amber-500 animate-pulse' :
+                  'bg-rose-500'
+                }`} />
+                <span className="text-sm text-slate-300">
+                  {connectionStatus === 'connected' ? 'Connected' :
+                   connectionStatus === 'connecting' ? 'Connecting...' :
+                   'Disconnected'}
+                </span>
+              </div>
+            </Card>
+
             {/* Timer */}
             <Card className="bg-slate-800 border-slate-700 px-4 py-2">
               <div className="flex items-center gap-2 text-white">
