@@ -155,7 +155,178 @@ export default function InterviewRoom() {
     }
   };
 
-  const addIntegrityFlag = (type, description) => {
+  const setupSpeechRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      console.log('Speech recognition not supported');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setRecognitionActive(true);
+      toast.success('🎤 Listening...');
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setCandidateResponse(prev => prev + finalTranscript);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setRecognitionActive(false);
+      setIsListening(false);
+      
+      if (event.error === 'no-speech') {
+        toast.error('No speech detected. Please speak clearly.');
+      } else if (event.error === 'not-allowed') {
+        toast.error('Microphone access denied.');
+      } else {
+        toast.error('Speech recognition error. Please try again.');
+      }
+    };
+
+    recognition.onend = () => {
+      setRecognitionActive(false);
+      if (isListening) {
+        // Restart if still in listening mode
+        try {
+          recognition.start();
+        } catch (e) {
+          setIsListening(false);
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+  };
+
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      toast.error('Speech recognition not available in your browser');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      toast.info('Voice input stopped');
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start recognition:', error);
+        toast.error('Failed to start voice input');
+      }
+    }
+  };
+
+  const setupFullscreenMonitoring = () => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && interviewStarted) {
+        // User exited fullscreen
+        const newExits = fullscreenExits + 1;
+        setFullscreenExits(newExits);
+
+        if (newExits >= MAX_FULLSCREEN_EXITS) {
+          // Failed integrity check
+          toast.error('🚫 Interview terminated: Exceeded fullscreen exit limit');
+          addIntegrityFlag('fullscreen_violation', 'Exceeded maximum fullscreen exits (3)');
+          
+          // Mark as unfit
+          if (wsRef.current) {
+            wsRef.current.send(JSON.stringify({
+              type: 'integrity_violation',
+              reason: 'Exceeded fullscreen exit limit',
+              action: 'terminate'
+            }));
+          }
+
+          // End interview
+          setTimeout(() => {
+            handleEndInterview(true); // true = integrity violation
+          }, 2000);
+        } else {
+          // Warning
+          const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
+          toast.error(`⚠️ WARNING: Do not exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`);
+          addIntegrityFlag('fullscreen_exit', `Fullscreen exit #${newExits}`);
+          
+          // Send to backend
+          if (wsRef.current) {
+            wsRef.current.send(JSON.stringify({
+              type: 'integrity_flag',
+              flag_type: 'fullscreen_exit',
+              description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
+            }));
+          }
+
+          // Re-enter fullscreen
+          enterFullscreen();
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+  };
+
+  const enterFullscreen = () => {
+    const elem = containerRef.current || document.documentElement;
+    
+    try {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    } catch (error) {
+      console.error('Fullscreen request failed:', error);
+      toast.error('Unable to enter fullscreen mode');
+    }
+  };
+
+  const exitFullscreen = () => {
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } catch (error) {
+      console.error('Exit fullscreen failed:', error);
+    }
+  };
     const flag = { type, description, timestamp: new Date().toISOString() };
     setIntegrityFlags(prev => {
       // Avoid duplicate flags within 5 seconds
