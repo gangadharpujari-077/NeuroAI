@@ -90,17 +90,20 @@ export default function InterviewRoom() {
       });
 
       faceDetection.onResults((results) => {
-        if (results.detections && results.detections.length > 0) {
-          setFaceDetected(true);
-          
-          // Check for multiple faces
-          if (results.detections.length > 1 && interviewStarted) {
-            addIntegrityFlag('multiple_faces', 'Multiple faces detected');
-          }
-        } else {
-          setFaceDetected(false);
-          if (interviewStarted) {
-            addIntegrityFlag('no_face', 'No face detected');
+        const hasDetections = results.detections && results.detections.length > 0;
+        
+        // Update face detection status immediately
+        setFaceDetected(hasDetections);
+        
+        if (interviewStarted) {
+          if (hasDetections) {
+            // Check for multiple faces
+            if (results.detections.length > 1) {
+              addIntegrityFlag('multiple_faces', 'Multiple faces detected in frame');
+            }
+          } else {
+            // No face detected
+            addIntegrityFlag('no_face', 'Candidate face not visible');
           }
         }
       });
@@ -108,22 +111,28 @@ export default function InterviewRoom() {
       await faceDetection.initialize();
       faceDetectionRef.current = faceDetection;
 
-      // Start camera for face detection
-      if (videoRef.current && streamRef.current) {
+      // Start camera for face detection with proper timing
+      if (videoRef.current) {
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
-            if (faceDetectionRef.current && videoRef.current) {
-              await faceDetectionRef.current.send({ image: videoRef.current });
+            if (faceDetectionRef.current && videoRef.current && videoRef.current.readyState === 4) {
+              try {
+                await faceDetectionRef.current.send({ image: videoRef.current });
+              } catch (e) {
+                // Silently handle frame processing errors
+              }
             }
           },
           width: 640,
           height: 480
         });
-        camera.start();
+        await camera.start();
         cameraRef.current = camera;
+        console.log('Face detection started successfully');
       }
     } catch (error) {
       console.error('Face detection initialization error:', error);
+      toast.error('Face detection initialization failed');
     }
   };
 
