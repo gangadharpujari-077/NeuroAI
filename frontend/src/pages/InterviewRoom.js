@@ -331,6 +331,20 @@ export default function InterviewRoom() {
             setTimeout(() => {
               console.log('Auto re-entering fullscreen...');
               enterFullscreen();
+              
+              // If auto-entry fails, show prompt after 2 seconds
+              setTimeout(() => {
+                const isNowFullscreen = !!(document.fullscreenElement || 
+                                          document.webkitFullscreenElement || 
+                                          document.mozFullScreenElement || 
+                                          document.msFullscreenElement);
+                if (!isNowFullscreen) {
+                  setShowFullscreenPrompt(true);
+                  toast.error('⚠️ You must click the button below to re-enter fullscreen!', {
+                    duration: 10000
+                  });
+                }
+              }, 2000);
             }, 500);
           }
         }
