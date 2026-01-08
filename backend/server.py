@@ -393,18 +393,25 @@ Rules:
             
             if data.get('type') == 'candidate_response':
                 # Send to AI
-                response = await chat.send_message(UserMessage(text=data['content']))
-                
-                await manager.send_message(interview_id, {
-                    "type": "ai_message",
-                    "content": response
-                })
-                
-                # Update questions
-                await db.interviews.update_one(
-                    {"id": interview_id},
-                    {"$push": {"questions_asked": response}}
-                )
+                try:
+                    response = await chat.send_message(UserMessage(text=data['content']))
+                    
+                    await manager.send_message(interview_id, {
+                        "type": "ai_message",
+                        "content": response
+                    })
+                    
+                    # Update questions
+                    await db.interviews.update_one(
+                        {"id": interview_id},
+                        {"$push": {"questions_asked": response}}
+                    )
+                except Exception as e:
+                    logging.error(f"AI response error: {e}")
+                    await manager.send_message(interview_id, {
+                        "type": "error",
+                        "message": "Failed to generate AI response. Please try again."
+                    })
             
             elif data.get('type') == 'integrity_flag':
                 # Log integrity issue
