@@ -849,6 +849,31 @@ export default function InterviewRoom() {
               </Card>
             )}
 
+            {/* Fullscreen Re-entry Prompt */}
+            {showFullscreenPrompt && interviewStarted && (
+              <Card className="bg-rose-900 border-rose-600 border-2 p-6 animate-pulse" data-testid="fullscreen-prompt">
+                <div className="flex flex-col gap-4 items-center text-center">
+                  <AlertTriangle className="w-12 h-12 text-rose-300" />
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">⚠️ RETURN TO FULLSCREEN IMMEDIATELY</h3>
+                    <p className="text-rose-200 mb-4">
+                      You have exited fullscreen mode. Click the button below to continue the interview.
+                      <br />
+                      <strong>Remaining chances: {MAX_FULLSCREEN_EXITS - fullscreenExitCountRef.current}</strong>
+                    </p>
+                  </div>
+                  <Button
+                    size="lg"
+                    onClick={enterFullscreen}
+                    className="bg-rose-500 hover:bg-rose-600 text-white text-lg px-8 py-6 h-auto"
+                    data-testid="return-fullscreen-btn"
+                  >
+                    🔒 Return to Fullscreen Now
+                  </Button>
+                </div>
+              </Card>
+            )}
+
             {/* Candidate Response Input */}
             {interviewStarted && (
               <Card className="bg-slate-800 border-slate-700 p-6" data-testid="response-input-card">
