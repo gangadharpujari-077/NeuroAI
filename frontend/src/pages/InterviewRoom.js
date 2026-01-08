@@ -578,6 +578,12 @@ export default function InterviewRoom() {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
     }
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
     exitFullscreen();
   };
 
