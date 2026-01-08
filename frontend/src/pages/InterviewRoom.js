@@ -351,19 +351,36 @@ export default function InterviewRoom() {
   const enterFullscreen = () => {
     const elem = containerRef.current || document.documentElement;
     
+    if (!elem) {
+      console.error('No element to make fullscreen');
+      return;
+    }
+    
     try {
       if (elem.requestFullscreen) {
-        elem.requestFullscreen();
+        elem.requestFullscreen().catch(err => {
+          console.error('Fullscreen request failed:', err);
+          toast.warning('⚠️ Fullscreen mode requires user permission. Click to allow.');
+        });
       } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
+        elem.webkitRequestFullscreen().catch(err => {
+          console.error('Webkit fullscreen failed:', err);
+          toast.warning('⚠️ Fullscreen mode requires user permission. Click to allow.');
+        });
       } else if (elem.mozRequestFullScreen) {
-        elem.mozRequestFullScreen();
+        elem.mozRequestFullScreen().catch(err => {
+          console.error('Mozilla fullscreen failed:', err);
+        });
       } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
+        elem.msRequestFullscreen().catch(err => {
+          console.error('MS fullscreen failed:', err);
+        });
+      } else {
+        toast.warning('Fullscreen mode not supported in your browser');
       }
     } catch (error) {
-      console.error('Fullscreen request failed:', error);
-      toast.error('Unable to enter fullscreen mode');
+      console.error('Fullscreen request exception:', error);
+      toast.warning('Unable to enter fullscreen mode. Continue interview normally.');
     }
   };
 
