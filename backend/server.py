@@ -413,6 +413,37 @@ Rules:
                     {"$push": {"integrity_flags": flag_dict}}
                 )
             
+            elif data.get('type') == 'integrity_violation':
+                # Serious violation - mark interview as failed
+                flag_dict = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "flag_type": "critical_violation",
+                    "description": data.get('reason', 'Critical integrity violation'),
+                    "action": data.get('action', 'terminate')
+                }
+                await db.interviews.update_one(
+                    {"id": interview_id},
+                    {
+                        "$push": {"integrity_flags": flag_dict},
+                        "$set": {
+                            "status": "terminated",
+                            "end_time": datetime.now(timezone.utc).isoformat(),
+                            "evaluation": {
+                                "recommendation": "Unfit - Integrity Violation",
+                                "reason": data.get('reason', 'Multiple integrity violations detected'),
+                                "integrity_score": 0
+                            }
+                        }
+                    }
+                )
+                
+                # Send termination message
+                await manager.send_message(interview_id, {
+                    "type": "evaluation",
+                    "content": "Interview terminated due to integrity violations"
+                })
+                break
+            
             elif data.get('type') == 'end_interview':
                 # Generate evaluation
                 eval_prompt = f"""The interview has ended. Generate a comprehensive evaluation report in JSON format:
