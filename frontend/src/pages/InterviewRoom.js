@@ -64,8 +64,8 @@ export default function InterviewRoom() {
 
   const setupEscKeyBlocker = () => {
     const handleKeyDown = (e) => {
-      // Block ESC key during interview
-      if (e.key === 'Escape' && interviewStarted) {
+      // Block ESC and F11 keys during interview
+      if ((e.key === 'Escape' || e.key === 'F11') && interviewStarted) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -74,16 +74,16 @@ export default function InterviewRoom() {
         const newExits = fullscreenExitCountRef.current;
         setFullscreenExits(newExits);
         
-        console.log(`ESC key blocked: ${newExits}/${MAX_FULLSCREEN_EXITS}`);
+        console.log(`Exit key blocked (${e.key}): ${newExits}/${MAX_FULLSCREEN_EXITS}`);
         
         // Log integrity flag
-        addIntegrityFlag('fullscreen_exit_attempt', `User attempted to exit fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`);
+        addIntegrityFlag('fullscreen_exit_attempt', `User attempted to exit fullscreen using ${e.key} (${newExits}/${MAX_FULLSCREEN_EXITS})`);
         
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({
             type: 'integrity_flag',
             flag_type: 'fullscreen_exit_attempt',
-            description: `User attempted to exit fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
+            description: `User attempted to exit fullscreen using ${e.key} (${newExits}/${MAX_FULLSCREEN_EXITS})`
           }));
         }
         
@@ -100,13 +100,15 @@ export default function InterviewRoom() {
             }));
           }
           
+          // Exit fullscreen and end interview
+          exitFullscreen();
           setTimeout(() => {
             handleEndInterview(true);
           }, 2000);
         } else {
           // Warning
           const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
-          toast.error(`🚫 WARNING #${newExits}: ESC key blocked! Attempting to exit fullscreen is a violation. ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
+          toast.error(`🚫 WARNING #${newExits}: ${e.key} key blocked! Attempting to exit fullscreen is a security violation. ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
             duration: 5000
           });
         }
