@@ -113,10 +113,16 @@ export default function InterviewRoom() {
             // Check for multiple faces
             if (results.detections.length > 1) {
               addIntegrityFlag('multiple_faces', 'Multiple faces detected in frame');
+              toast.error('⚠️ Multiple faces detected! Only candidate should be visible.');
             }
           } else {
-            // No face detected
-            addIntegrityFlag('no_face', 'Candidate face not visible');
+            // No face detected - warn user
+            const now = Date.now();
+            if (now - lastFaceWarning > FACE_WARNING_INTERVAL) {
+              addIntegrityFlag('no_face', 'Candidate face not visible');
+              toast.error('⚠️ Your face is not visible! Please ensure you are in front of the camera.');
+              setLastFaceWarning(now);
+            }
           }
         }
       });
