@@ -822,9 +822,10 @@ export default function InterviewRoom() {
                             size="sm"
                             className="gap-2"
                             data-testid="voice-input-btn"
+                            title="Keyboard shortcut: Ctrl+Space"
                           >
                             <Mic className="w-4 h-4" />
-                            {isListening ? 'Stop Voice' : 'Start Voice'}
+                            {isListening ? 'Stop Voice' : 'Start Voice'} (Ctrl+Space)
                           </Button>
                           <span className="text-xs text-slate-400">or press Ctrl+Enter to send</span>
                         </div>
