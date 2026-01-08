@@ -12,7 +12,8 @@ export default function PreInterview() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
+  const [interviewData, setInterviewData] = useState(null);
+  const [analysisData, setAnalysisData] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -21,10 +22,26 @@ export default function PreInterview() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const result = await getInterview(id);
-      setData(result);
+      
+      // Get interview data from localStorage first (from setup page)
+      const setupData = localStorage.getItem(`interview_${id}`);
+      if (setupData) {
+        const parsed = JSON.parse(setupData);
+        setAnalysisData(parsed.role_fit_analysis);
+        setInterviewData(parsed);
+      } else {
+        // Fallback: fetch from API
+        const result = await getInterview(id);
+        setInterviewData(result);
+        
+        // If no analysis in result, show error
+        if (!result.role_fit_analysis) {
+          toast.error('Analysis data not available');
+        }
+      }
     } catch (error) {
       toast.error('Failed to load interview data');
+      console.error(error);
     } finally {
       setLoading(false);
     }
