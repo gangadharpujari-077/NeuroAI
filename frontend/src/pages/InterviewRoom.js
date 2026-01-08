@@ -716,6 +716,25 @@ export default function InterviewRoom() {
               </Card>
             )}
 
+            {/* Waiting for AI Indicator */}
+            {isWaitingForAI && (
+              <Card className="bg-slate-800 border-slate-700 p-6">
+                <div className="flex gap-4 items-center">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                    <span className="text-white font-bold">AI</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="text-slate-400 ml-2">AI is thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Candidate Response Input */}
             {interviewStarted && (
               <Card className="bg-slate-800 border-slate-700 p-6" data-testid="response-input-card">
