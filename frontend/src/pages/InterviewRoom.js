@@ -289,10 +289,22 @@ export default function InterviewRoom() {
           
           console.log(`Fullscreen exit detected: ${newExits}/${MAX_FULLSCREEN_EXITS}`);
           
+          // Log the flag
+          addIntegrityFlag('fullscreen_exit', `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`);
+          
+          // Send to backend immediately
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({
+              type: 'integrity_flag',
+              flag_type: 'fullscreen_exit',
+              description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
+            }));
+          }
+          
           if (newExits >= MAX_FULLSCREEN_EXITS) {
-            // Failed integrity check - 3rd exit
+            // Failed integrity check - 3rd exit ONLY
             toast.error('🚫 Interview terminated: Exceeded fullscreen exit limit (3/3)');
-            addIntegrityFlag('fullscreen_violation', 'Exceeded maximum fullscreen exits (3)');
+            addIntegrityFlag('critical_violation', 'Exceeded fullscreen exit limit');
             
             // Mark as unfit
             if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -303,32 +315,22 @@ export default function InterviewRoom() {
               }));
             }
             
-            // End interview
+            // End interview after 2 seconds
             setTimeout(() => {
               handleEndInterview(true); // true = integrity violation
             }, 2000);
           } else {
-            // Warning for 1st and 2nd exit
+            // Warning for 1st and 2nd exit - AUTO RE-ENTER
             const remainingChances = MAX_FULLSCREEN_EXITS - newExits;
             toast.error(`⚠️ WARNING #${newExits}: Do not exit fullscreen! ${remainingChances} ${remainingChances === 1 ? 'chance' : 'chances'} remaining.`, {
               duration: 5000
             });
-            addIntegrityFlag('fullscreen_exit', `Fullscreen exit #${newExits}`);
             
-            // Send to backend
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({
-                type: 'integrity_flag',
-                flag_type: 'fullscreen_exit',
-                description: `User exited fullscreen (${newExits}/${MAX_FULLSCREEN_EXITS})`
-              }));
-            }
-            
-            // Try to re-enter fullscreen after brief delay
+            // AUTOMATIC re-enter fullscreen (NO MANUAL BUTTON NEEDED)
             setTimeout(() => {
-              toast.info('Re-entering secure mode...');
+              console.log('Auto re-entering fullscreen...');
               enterFullscreen();
-            }, 1500);
+            }, 500);
           }
         }
       }
