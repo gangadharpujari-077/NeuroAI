@@ -120,6 +120,26 @@ export default function EvaluationReport() {
           </Button>
         </div>
 
+        {/* No Response Warning */}
+        {evaluation.recommendation.includes('Cannot Evaluate') && (
+          <Card className="mb-6 border-slate-400 bg-slate-100 shadow-xl">
+            <CardContent className="pt-6">
+              <div className="flex gap-4 items-start">
+                <AlertTriangle className="w-8 h-8 text-slate-600 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    Interview Not Completed
+                  </h3>
+                  <p className="text-slate-700 leading-relaxed">
+                    The candidate did not provide any responses during the interview session. 
+                    No evaluation can be generated without candidate participation.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Overall Score */}
         <Card className="mb-6 border-slate-200 shadow-xl grain-texture" data-testid="overall-score-card">
           <CardHeader className="border-b border-slate-200 bg-slate-50">
