@@ -195,6 +195,7 @@ def main():
         ("Get All Interviews", tester.test_get_interviews),
         ("Get Specific Interview", tester.test_get_specific_interview),
         ("Start Interview", tester.test_start_interview),
+        ("Add Integrity Flag", tester.test_integrity_flag),
         ("End Interview", tester.test_end_interview),
     ]
     
