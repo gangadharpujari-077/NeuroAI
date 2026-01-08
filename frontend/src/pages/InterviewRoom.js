@@ -671,10 +671,10 @@ export default function InterviewRoom() {
                 💡 Shortcuts: Ctrl+Space (voice) | Ctrl+Enter (send) | Scroll to see all controls
               </p>
             )}
-            {fullscreenExits > 0 && (
+            {fullscreenExitCountRef.current > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="destructive" className="animate-pulse">
-                  ⚠️ Fullscreen Exits: {fullscreenExits}/{MAX_FULLSCREEN_EXITS}
+                  ⚠️ Fullscreen Exits: {fullscreenExitCountRef.current}/{MAX_FULLSCREEN_EXITS}
                 </Badge>
               </div>
             )}
