@@ -20,7 +20,9 @@ export default function InterviewRoom() {
   const [aiMessage, setAiMessage] = useState('');
   const [transcript, setTranscript] = useState([]);
   const [integrityFlags, setIntegrityFlags] = useState([]);
-  const [faceDetected, setFaceDetected] = useState(true);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [candidateResponse, setCandidateResponse] = useState('');
+  const [isListening, setIsListening] = useState(false);
   
   const videoRef = useRef(null);
   const wsRef = useRef(null);
