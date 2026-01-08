@@ -697,6 +697,19 @@ export default function InterviewRoom() {
             )}
           </div>
           <div className="flex items-center gap-4">
+            {/* Manual Fullscreen Button */}
+            {interviewStarted && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={enterFullscreen}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                data-testid="manual-fullscreen-btn"
+              >
+                Enter Fullscreen
+              </Button>
+            )}
+
             {/* Connection Status */}
             <Card className="bg-slate-800 border-slate-700 px-4 py-2">
               <div className="flex items-center gap-2">
