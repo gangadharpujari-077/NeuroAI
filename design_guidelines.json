@@ -1,0 +1,180 @@
+{
+  "brand_identity": {
+    "name": "Veritas AI",
+    "tagline": "Integrity in Every Interaction",
+    "archetype": "Swiss & High-Contrast",
+    "emotional_tone": "Authoritative, Transparent, Calm, High-Precision",
+    "visual_metaphor": "The Control Room"
+  },
+  "typography": {
+    "headings": {
+      "family": "Manrope",
+      "weights": ["600", "700", "800"],
+      "usage": "Page titles, Section headers, Metric values",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "family": "Public Sans",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, UI labels, Form inputs",
+      "line_height": "leading-relaxed"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "weights": ["400"],
+      "usage": "Timestamps, Data logs, Integrity scores, Code snippets"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0f172a",
+        "foreground": "#f8fafc",
+        "hover": "#1e293b"
+      },
+      "secondary": {
+        "DEFAULT": "#f1f5f9",
+        "foreground": "#0f172a",
+        "hover": "#e2e8f0"
+      },
+      "accent": {
+        "DEFAULT": "#6366f1",
+        "foreground": "#ffffff",
+        "glow": "0 0 20px rgba(99, 102, 241, 0.5)"
+      },
+      "background": {
+        "light": "#fafafa",
+        "dark": "#09090b",
+        "interview": "#020617"
+      },
+      "surface": {
+        "light": "#ffffff",
+        "dark": "#18181b"
+      },
+      "semantic": {
+        "success": "#10b981",
+        "warning": "#f59e0b",
+        "danger": "#f43f5e",
+        "info": "#3b82f6"
+      }
+    },
+    "gradients": {
+      "integrity_safe": "linear-gradient(to right, #10b981, #34d399)",
+      "integrity_risk": "linear-gradient(to right, #f43f5e, #fb7185)",
+      "glass_surface": "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)"
+    }
+  },
+  "layout_system": {
+    "grid_strategy": "Bento Grid (Mode B: Control Room)",
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-12",
+      "gap_strategy": "gap-4 md:gap-6",
+      "section_spacing": "py-16 md:py-24"
+    },
+    "containers": {
+      "dashboard_card": "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm",
+      "interview_viewport": "relative w-full h-full bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-md font-medium transition-all active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-6 rounded-md font-medium",
+      "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-6 rounded-md",
+      "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 rounded-md"
+    },
+    "cards": {
+      "style": "Grid Borders",
+      "implementation": "border border-border/40 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-200"
+    },
+    "inputs": {
+      "style": "h-11 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "badges": {
+      "style": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+      "variants": {
+        "high_fit": "border-transparent bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25",
+        "low_fit": "border-transparent bg-rose-500/15 text-rose-700 hover:bg-rose-500/25",
+        "neutral": "border-transparent bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+      }
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "usage": "Overlays, Toasts, Floating Controls in Interview Room",
+      "classes": "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg"
+    },
+    "tracing_beam": {
+      "usage": "Active recording indicator, AI processing status",
+      "implementation": "Animated gradient border or progress bar"
+    },
+    "noise_texture": {
+      "usage": "Subtle background texture for 'paper' feel in reports",
+      "opacity": "opacity-[0.03]"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-200 ease-out",
+    "micro_interactions": {
+      "hover_lift": "hover:-translate-y-0.5 hover:shadow-md",
+      "active_press": "active:scale-[0.98]"
+    },
+    "page_transitions": "animate-in fade-in slide-in-from-bottom-4 duration-500"
+  },
+  "accessibility": {
+    "contrast": "WCAG AA compliant (4.5:1 for normal text)",
+    "focus_states": "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500",
+    "reduced_motion": "respects prefers-reduced-motion media query"
+  },
+  "assets": {
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width={1.5} size={20}"
+    },
+    "images": {
+      "landing_hero": {
+        "url": "https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg",
+        "alt": "Diverse team analyzing interview data",
+        "category": "landing"
+      },
+      "candidate_demo": {
+        "url": "https://images.unsplash.com/photo-1624377103868-c780d0fa2b4c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBkaXZlcnNlJTIwY2FuZGlkYXRlJTIwd2ViY2FtJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzY3ODU0ODAwfDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Candidate in professional setting",
+        "category": "demo"
+      },
+      "office_bg": {
+        "url": "https://images.pexels.com/photos/6203311/pexels-photo-6203311.jpeg",
+        "alt": "Minimalist modern office background",
+        "category": "background"
+      }
+    }
+  },
+  "instructions_to_main_agent": {
+    "general": "You are building 'Veritas AI', a professional, high-integrity interview platform. The design must feel like a 'Control Room' - dense, data-rich, but calm. Avoid generic SaaS gradients. Use the 'Grid Borders' style for cards.",
+    "interview_room": "The Live Interview Room MUST be in Dark Mode by default to reduce glare. Use 'Glassmorphism' for the controls overlay. The video feed is the hero.",
+    "dashboard": "Use the 'Bento Grid' layout. Do not leave large empty white spaces. Fill the grid with meaningful data visualization or 'filler' stats to maintain density.",
+    "charts": "Use Recharts or Shadcn Charts. Color code them strictly: Green = Good/Safe, Red = Risk/Alert, Blue = Neutral/Info.",
+    "forms": "Use Shadcn Form components. Customize the input borders to be 'zinc-200' in light mode and 'zinc-800' in dark mode. Add subtle focus rings.",
+    "testing": "Add 'data-testid' to ALL interactive elements (buttons, inputs, cards). Format: 'kebab-case' (e.g., 'start-interview-btn', 'candidate-name-input')."
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
