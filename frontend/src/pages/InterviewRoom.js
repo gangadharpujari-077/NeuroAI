@@ -781,11 +781,11 @@ export default function InterviewRoom() {
                         </div>
                         <Button
                           onClick={sendCandidateResponse}
-                          disabled={!candidateResponse.trim()}
-                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!candidateResponse.trim() || isWaitingForAI || connectionStatus !== 'connected'}
+                          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                           data-testid="send-response-btn"
                         >
-                          Send Response
+                          {isWaitingForAI ? 'Waiting...' : 'Send Response'}
                         </Button>
                       </div>
                     </div>
