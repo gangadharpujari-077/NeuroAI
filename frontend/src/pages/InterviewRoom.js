@@ -373,32 +373,38 @@ export default function InterviewRoom() {
       return;
     }
     
-    try {
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(err => {
-          console.error('Fullscreen request failed:', err);
-          toast.warning('⚠️ Fullscreen mode requires user permission. Click to allow.');
-        });
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen().catch(err => {
-          console.error('Webkit fullscreen failed:', err);
-          toast.warning('⚠️ Fullscreen mode requires user permission. Click to allow.');
-        });
-      } else if (elem.mozRequestFullScreen) {
-        elem.mozRequestFullScreen().catch(err => {
-          console.error('Mozilla fullscreen failed:', err);
-        });
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen().catch(err => {
-          console.error('MS fullscreen failed:', err);
-        });
-      } else {
-        toast.warning('Fullscreen mode not supported in your browser');
+    // Hide prompt if shown
+    setShowFullscreenPrompt(false);
+    
+    const requestFS = async () => {
+      try {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
+        } else {
+          toast.error('Fullscreen not supported in your browser');
+          return;
+        }
+        console.log('Fullscreen entered successfully');
+      } catch (err) {
+        console.error('Fullscreen request failed:', err);
+        
+        // Show manual prompt if automatic fails
+        if (interviewStarted) {
+          setShowFullscreenPrompt(true);
+          toast.error('⚠️ Click the "Return to Fullscreen" button below!', {
+            duration: 10000
+          });
+        }
       }
-    } catch (error) {
-      console.error('Fullscreen request exception:', error);
-      toast.warning('Unable to enter fullscreen mode. Continue interview normally.');
-    }
+    };
+    
+    requestFS();
   };
 
   const exitFullscreen = () => {
