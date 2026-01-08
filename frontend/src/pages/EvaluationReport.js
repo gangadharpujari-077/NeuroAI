@@ -77,8 +77,9 @@ export default function EvaluationReport() {
       score: 100,
       suspicious_moments: data.integrity_flags || []
     },
-    strengths: data.evaluation.strengths || ['Assessment pending'],
-    weaknesses: data.evaluation.weaknesses || ['Assessment pending']
+    // Remove duplicates from strengths and weaknesses
+    strengths: [...new Set(data.evaluation.strengths || ['Assessment pending'])],
+    weaknesses: [...new Set(data.evaluation.weaknesses || ['Assessment pending'])]
   };
 
   const getRecommendationColor = (rec) => {
