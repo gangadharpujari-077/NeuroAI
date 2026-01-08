@@ -426,6 +426,12 @@ export default function InterviewRoom() {
   };
 
   const initializeWebSocket = () => {
+    // Prevent multiple initializations
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connected, skipping initialization');
+      return;
+    }
+
     const wsUrl = process.env.REACT_APP_BACKEND_URL.replace('http', 'ws') + `/api/interview/${id}/ws`;
     
     // Clear existing connection if any
