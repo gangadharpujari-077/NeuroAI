@@ -44,6 +44,8 @@ export default function InterviewRoom() {
 
   useEffect(() => {
     initializeMedia();
+    setupSpeechRecognition();
+    setupFullscreenMonitoring();
     return () => {
       cleanup();
     };
