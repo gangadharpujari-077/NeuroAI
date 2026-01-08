@@ -360,26 +360,57 @@ export default function InterviewRoom() {
 
   const initializeWebSocket = () => {
     const wsUrl = process.env.REACT_APP_BACKEND_URL.replace('http', 'ws') + `/api/interview/${id}/ws`;
+    
+    // Clear existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    
+    setConnectionStatus('connecting');
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
       console.log('WebSocket connected');
+      setConnectionStatus('connected');
       toast.success('Connected to AI interviewer');
+      
+      // Start heartbeat to keep connection alive
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, HEARTBEAT_INTERVAL);
     };
     
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       
+      if (data.type === 'pong') {
+        // Heartbeat response
+        console.log('Heartbeat received');
+        return;
+      }
+      
       if (data.type === 'ai_message') {
+        setIsWaitingForAI(false);
         setAiMessage(data.content);
         setTranscript(prev => [...prev, { speaker: 'AI', message: data.content, time: formatTime(timeElapsed) }]);
         
         // Speak the message
         if (window.speechSynthesis) {
+          // Cancel any ongoing speech
+          window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(data.content);
           utterance.rate = 0.9;
           window.speechSynthesis.speak(utterance);
         }
+      } else if (data.type === 'error') {
+        setIsWaitingForAI(false);
+        toast.error(`AI Error: ${data.message || 'Failed to process response'}`);
+        console.error('AI Error:', data);
       } else if (data.type === 'evaluation') {
         navigate(`/evaluation/${id}`);
       }
@@ -387,25 +418,66 @@ export default function InterviewRoom() {
     
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      toast.error('Connection error');
+      setConnectionStatus('disconnected');
+      toast.error('Connection error - attempting to reconnect...');
+      attemptReconnect();
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket closed');
+    ws.onclose = (event) => {
+      console.log('WebSocket closed', event.code, event.reason);
+      setConnectionStatus('disconnected');
+      
+      // Clear heartbeat
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      
+      // Attempt reconnection if interview is still active
+      if (interviewStarted && event.code !== 1000) {
+        toast.warning('Connection lost - reconnecting...');
+        attemptReconnect();
+      }
     };
     
     wsRef.current = ws;
   };
 
+  const attemptReconnect = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (interviewStarted && connectionStatus !== 'connected') {
+        console.log('Attempting to reconnect WebSocket...');
+        initializeWebSocket();
+      }
+    }, 3000); // Retry after 3 seconds
+  };
+
   const sendCandidateResponse = () => {
-    if (!candidateResponse.trim() || !wsRef.current) return;
+    if (!candidateResponse.trim() || !wsRef.current) {
+      if (!wsRef.current) {
+        toast.error('Not connected. Reconnecting...');
+        initializeWebSocket();
+      }
+      return;
+    }
+
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      toast.error('Connection not ready. Please wait...');
+      return;
+    }
     
     const response = candidateResponse.trim();
     
     // Add to transcript
     setTranscript(prev => [...prev, { speaker: 'Candidate', message: response, time: formatTime(timeElapsed) }]);
     
-    // Send to backend
+    // Show waiting state
+    setIsWaitingForAI(true);
+    
+    // Send to backend with timeout
     wsRef.current.send(JSON.stringify({ 
       type: 'candidate_response',
       content: response 
@@ -414,6 +486,14 @@ export default function InterviewRoom() {
     // Clear input
     setCandidateResponse('');
     toast.success('Response sent');
+    
+    // Set timeout for AI response
+    setTimeout(() => {
+      if (isWaitingForAI) {
+        setIsWaitingForAI(false);
+        toast.error('AI response timeout. Please try again.');
+      }
+    }, AI_RESPONSE_TIMEOUT);
   };
 
   const handleStartInterview = async () => {
