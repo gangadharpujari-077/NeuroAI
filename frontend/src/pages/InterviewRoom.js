@@ -30,6 +30,7 @@ export default function InterviewRoom() {
   const [isWaitingForAI, setIsWaitingForAI] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
   
   const recognitionRef = useRef(null);
   const containerRef = useRef(null);
